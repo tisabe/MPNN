@@ -136,7 +136,7 @@ class MPEU(Conv):
           regularizer=self.kernel_regularizer,
           constraint=self.kernel_constraint)
       self.wE2 = self.add_weight(
-          shape=(self.n_hidden_E1, self.S), # check dims
+          shape=(self.n_hidden_E1, self.S),
           initializer=self.kernel_initializer,
           name="wE2",
           regularizer=self.kernel_regularizer,
