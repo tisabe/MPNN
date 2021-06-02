@@ -144,7 +144,11 @@ class TestHelperFunctions(unittest.TestCase):
     out_dim_e = 10
     testEmbedding = MPEU_embedding_QM9(out_dim_e=out_dim_e)
     h_embed, a_embed, e_embed = testEmbedding([self.h_test, self.a_test, self.e_test])
-
+  
+  def test_edge_gradient(self):
+  '''Test gradient of wE1 and wE2 in edge update function with tensorflow gradient tape
+  '''
+    return 0
 
 if __name__ == '__main__':
     unittest.main()
