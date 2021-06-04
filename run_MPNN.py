@@ -29,14 +29,14 @@ ids_train, ids_test = np.split(ids_shuffled, [split])  # Split our data into tes
 dataset_train, dataset_test = dataset[ids_train], dataset[ids_test]
 
 ### create the model with MPNN layers
-edge_updates = False # disable edge updates
+edge_updates = True # disable edge updates
 
 class MyGNN(Model):
   def __init__(self):
     super().__init__()
     self.mp_layer1 = MPEU(activation="relu", do_edge_update=edge_updates)
     self.mp_layer2 = MPEU(activation="relu", do_edge_update=edge_updates)
-    self.mp_layer3 = MPEU(activation="relu", do_edge_update=edge_updates)
+    self.mp_layer3 = MPEU(activation="relu", do_edge_update=False)
     self.embedding_layer = MPEU_embedding_QM9()
     self.readout_layer = MPEU_readout(out_dim=19)
   
@@ -48,7 +48,7 @@ class MyGNN(Model):
     return self.readout_layer(res)
 
 # define hyperparameters
-learning_rate = 1e-3  # Learning rate
+learning_rate = 2*1e-3  # Learning rate
 epochs = 20  # Number of training epochs
 batch_size = 32  # Batch size
 
