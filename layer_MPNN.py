@@ -17,7 +17,7 @@ class MPEU(Conv):
 
   Extends the Conv layer from Spektral library.
 
-  Mode: batch
+  Mode: MPEU assumes the layer is run in batch-mode
   Node and edge feature matrices are zero padded to the highest number of nodes,
   N_max, within the batch.
 
@@ -34,26 +34,12 @@ class MPEU(Conv):
     - a_out: same as input
     - e_out: same as input, but after convolution
 
-  Args:
-    - do_edge_update: boolean, wether to compute edge updates (for testing)
-    - n_m: number of hidden neurons
-    - n_w2:
-    - n_w5:
-    - n_E1:
-    - `activation`: activation function;
-    - `use_bias`: bool, add a bias vector to the output;
-    - `kernel_initializer`: initializer for the weights;
-    - `bias_initializer`: initializer for the bias vector;
-    - `kernel_regularizer`: regularization applied to the weights;
-    - `bias_regularizer`: regularization applied to the bias vector;
-    - `activity_regularizer`: regularization applied to the output;
-    - `kernel_constraint`: constraint applied to the weights;
-    - `bias_constraint`: constraint applied to the bias vector.
+  
   """
   def __init__(
       self,
-      do_edge_update = False,
-      n_hidden_m=32, n_hidden_w2=32, n_hidden_w5=32, n_hidden_E1=None,
+      do_edge_update: bool = False,
+      n_hidden_m: int = 32, n_hidden_w2=32, n_hidden_w5=32, n_hidden_E1=None,
       activation=None,
       use_bias=True,
       kernel_initializer="glorot_uniform",
@@ -65,6 +51,24 @@ class MPEU(Conv):
       bias_constraint=None,
       **kwargs
   ):
+    '''Constructor for MPEU class.
+    
+    Args:
+      do_edge_update: boolean, wether to compute edge updates (for testing)
+      n_m: number of hidden neurons
+      n_w2:
+      n_w5:
+      n_E1:
+      activation: Activation function.
+      use_bias: Bool, add a bias vector to the output
+      kernel_initializer: initializer for the weights;
+      bias_initializer: initializer for the bias vector;
+      kernel_regularizer: regularization applied to the weights;
+      `bias_regularizer`: regularization applied to the bias vector;
+      `activity_regularizer`: regularization applied to the output;
+      `kernel_constraint`: constraint applied to the weights;
+      `bias_constraint`: constraint applied to the bias vector.
+    '''
     super().__init__(
         activation=activation,
         use_bias=use_bias,
