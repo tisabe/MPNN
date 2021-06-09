@@ -48,7 +48,7 @@ class MyGNN(Model):
     return self.readout_layer(res)
 
 # define hyperparameters
-learning_rate = 2*1e-3  # Learning rate
+learning_rate = 1e-3  # Learning rate
 epochs = 20  # Number of training epochs
 batch_size = 32  # Batch size
 
