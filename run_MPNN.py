@@ -8,6 +8,8 @@ from layer_MPNN import *
 from spektral.data import BatchLoader  # Feed batches of data.
 from spektral.datasets import QM9
 
+import datetime # for tensorboard
+
 # Download the dataset.
 dataset = QM9(amount=1000)  # Set amount=None to train on whole dataset
 print(dataset[0])
@@ -49,7 +51,7 @@ class MyGNN(Model):
 
 # define hyperparameters
 learning_rate = 1e-3  # Learning rate
-epochs = 20  # Number of training epochs
+epochs = 10  # Number of training epochs
 batch_size = 32  # Batch size
 
 model = MyGNN()
@@ -58,9 +60,13 @@ model.compile(optimizer=optimizer, loss="mse", run_eagerly=True)
 #model.compile(optimizer=optimizer, loss="mse")
 loader_tr = BatchLoader(dataset_train, batch_size=batch_size)
 
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
 model.fit(loader_tr.load(),
           steps_per_epoch=loader_tr.steps_per_epoch,
-          epochs=epochs)
+          epochs=epochs,
+	  callbacks=[tensorboard_callback])
 
 print("Learning rate:")
 print(learning_rate)
