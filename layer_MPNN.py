@@ -51,24 +51,24 @@ class MPEU(Conv):
       bias_constraint=None,
       **kwargs
   ):
-    '''Constructor for MPEU class.
+    """Constructor for MPEU class.
     
     Args:
       do_edge_update: boolean, wether to compute edge updates (for testing)
       n_m: number of hidden neurons
-      n_w2:
-      n_w5:
-      n_E1:
+      n_w2: number of output neurons of the w2 weight matrix
+      n_w5: number of output neurons of the w5 weight matrix
+      n_E1: number of output neurons of the E2 weight matrix
       activation: Activation function.
       use_bias: Bool, add a bias vector to the output
       kernel_initializer: initializer for the weights;
       bias_initializer: initializer for the bias vector;
       kernel_regularizer: regularization applied to the weights;
-      `bias_regularizer`: regularization applied to the bias vector;
-      `activity_regularizer`: regularization applied to the output;
-      `kernel_constraint`: constraint applied to the weights;
-      `bias_constraint`: constraint applied to the bias vector.
-    '''
+      bias_regularizer: regularization applied to the bias vector;
+      activity_regularizer: regularization applied to the output;
+      kernel_constraint: constraint applied to the weights;
+      bias_constraint: constraint applied to the bias vector.
+    """
     super().__init__(
         activation=activation,
         use_bias=use_bias,
@@ -88,9 +88,7 @@ class MPEU(Conv):
     self.do_edge_update = do_edge_update
 
   def build(self, input_shape):
-    '''Build the layer on first call, when matrix dimensions are known.'''
-    # TODO: Move assert to a seperate test.
-    assert len(input_shape) == 3
+    """Build the layer on first call, when matrix dimensions are known."""
     self.batch_size = input_shape[0][0]
 
     # TODO: change these names.
@@ -147,7 +145,7 @@ class MPEU(Conv):
           constraint=self.kernel_constraint)
 
   def message(self, x, a, e):
-    '''Return node-wise message as described in paper above.'''
+    """Return node-wise message as described in paper above."""
     x_w = tf.matmul(x, self.w1)
     x_w = tf.expand_dims(x_w, -3)
     # tf.tile repeats a tensor in a given dimension.
@@ -161,7 +159,7 @@ class MPEU(Conv):
     return m
 
   def node_update(self, x, a, e):
-    '''Return updated nodes as in paper above.'''
+    """Return updated nodes as in paper above."""
     m = self.message(x, a, e)
     h_next = tf.matmul(m, self.w4)
     h_next = self.activation(h_next)
@@ -170,7 +168,7 @@ class MPEU(Conv):
     return h_next
 
   def edge_update(self, x, a, e):
-    '''Return updated edges as in paper above.'''
+    """Return updated edges as in paper above."""
     h_w = tf.expand_dims(x, -3)
     h_w = tf.tile(h_w, [1,h_w.shape[-2],1,1])
     h_v = tf.expand_dims(x, -2)
@@ -183,6 +181,9 @@ class MPEU(Conv):
     return e_next
 
   def call(self, inputs):
+    """Return the updated values of node, edge features and adjacency matrix.
+    This function is called by calling the layer object after instantiation.
+    """
     h, a, e = inputs
     h = self.node_update(h, a, e)
     if self.do_edge_update:
@@ -215,15 +216,15 @@ class MPEU_readout(Conv):
   Args:
     - out_dim: number of features per graph in the training/testing dataset 
     - n_hidden: number of hidden neurons 
-    - `activation`: activation function;
-    - `use_bias`: bool, add a bias vector to the output;
-    - `kernel_initializer`: initializer for the weights;
-    - `bias_initializer`: initializer for the bias vector;
-    - `kernel_regularizer`: regularization applied to the weights;
-    - `bias_regularizer`: regularization applied to the bias vector;
-    - `activity_regularizer`: regularization applied to the output;
-    - `kernel_constraint`: constraint applied to the weights;
-    - `bias_constraint`: constraint applied to the bias vector.
+    - activation: activation function;
+    - use_bias: bool, add a bias vector to the output;
+    - kernel_initializer: initializer for the weights;
+    - bias_initializer: initializer for the bias vector;
+    - kernel_regularizer: regularization applied to the weights;
+    - bias_regularizer: regularization applied to the bias vector;
+    - activity_regularizer: regularization applied to the output;
+    - kernel_constraint: constraint applied to the weights;
+    - bias_constraint: constraint applied to the bias vector.
   """
   def __init__(
       self,
@@ -256,7 +257,7 @@ class MPEU_readout(Conv):
     self.n_hidden = n_hidden
 
   def build(self, input_shape):
-    '''Build the layer on first call, when matrix dimensions are known.'''
+    """Build the layer on first call, when matrix dimensions are known."""
     assert len(input_shape) == 3
     self.batch_size = input_shape[0][0]
     self.N = input_shape[0][-2] # number of nodes (maximum in batch, smaller graphs are zero padded)
@@ -316,15 +317,15 @@ class MPEU_embedding_QM9(Conv):
   Args:
     - cutoff: cutoff distance for atoms to be counted as neighbors
     - out_dim_e: number of edge features in the output embedding
-    - `activation`: activation function;
-    - `use_bias`: bool, add a bias vector to the output;
-    - `kernel_initializer`: initializer for the weights;
-    - `bias_initializer`: initializer for the bias vector;
-    - `kernel_regularizer`: regularization applied to the weights;
-    - `bias_regularizer`: regularization applied to the bias vector;
-    - `activity_regularizer`: regularization applied to the output;
-    - `kernel_constraint`: constraint applied to the weights;
-    - `bias_constraint`: constraint applied to the bias vector.
+    - activation: activation function;
+    - use_bias: bool, add a bias vector to the output;
+    - kernel_initializer: initializer for the weights;
+    - bias_initializer: initializer for the bias vector;
+    - kernel_regularizer: regularization applied to the weights;
+    - bias_regularizer: regularization applied to the bias vector;
+    - activity_regularizer: regularization applied to the output;
+    - kernel_constraint: constraint applied to the weights;
+    - bias_constraint: constraint applied to the bias vector.
   """
   def __init__(
       self,
@@ -357,7 +358,7 @@ class MPEU_embedding_QM9(Conv):
     self.cutoff = cutoff
 
   def build(self, input_shape):
-    '''Build the layer on first call, when matrix dimensions are known.'''
+    """Build the layer on first call, when matrix dimensions are known."""
     assert len(input_shape) == 3
     self.batch_size = input_shape[0][0]
     self.N = input_shape[0][-2] # number of nodes (maximum in batch, smaller graphs are zero padded)
@@ -366,14 +367,14 @@ class MPEU_embedding_QM9(Conv):
     self.S = input_shape[2][-1] # number of edge features
 
   def get_k_matrix(self, D):
-    '''Return a matrix of k numbers to build the edge embedding.
+    """Return a matrix of k numbers to build the edge embedding.
     Args:
       - D: pairwise distance matrix, batched
         Size: (btach_size, N_max, N_max)
 
     Returns: k matrix, ascending integers in last dimension, 
       repeated to be size: (batch_size, N_max, N_max, k_max)
-    '''
+    """
     k_max = self.out_dim_e
     #k_rbf = tf.range(kmax)
     k_rbf = tf.range(k_max, dtype=tf.dtypes.float32)
