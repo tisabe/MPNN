@@ -99,31 +99,31 @@ class MPEU(Conv):
     self.S = input_shape[2][-1] # number of edge features
     self.n_hidden_E1 = (2*self.F + self.S) if self.n_hidden_E1==None else self.n_hidden_E1
     # add weight matrices for feed-forward neural networks
-    self.w1 = self.add_weight(
+    self._w1 = self.add_weight(
         shape=(self.F, self.n_hidden_m),
         initializer=self.kernel_initializer,
         name="w1",
         regularizer=self.kernel_regularizer,
         constraint=self.kernel_constraint)
-    self.w2 = self.add_weight(
+    self._w2 = self.add_weight(
         shape=(self.S, self.n_hidden_w2),
         initializer=self.kernel_initializer,
         name="w2",
         regularizer=self.kernel_regularizer,
         constraint=self.kernel_constraint)
-    self.w3 = self.add_weight(
+    self._w3 = self.add_weight(
         shape=(self.n_hidden_w2, self.n_hidden_m),
         initializer=self.kernel_initializer,
         name="w2",
         regularizer=self.kernel_regularizer,
         constraint=self.kernel_constraint)
-    self.w4 = self.add_weight(
+    self._w4 = self.add_weight(
         shape=(self.n_hidden_m, self.n_hidden_w5),
         initializer=self.kernel_initializer,
         name="w4",
         regularizer=self.kernel_regularizer,
         constraint=self.kernel_constraint)
-    self.w5 = self.add_weight(
+    self._w5 = self.add_weight(
         shape=(self.n_hidden_w5, self.F),
         initializer=self.kernel_initializer,
         name="w5",
@@ -131,13 +131,13 @@ class MPEU(Conv):
         constraint=self.kernel_constraint)
 
     if self.do_edge_update:
-      self.wE1 = self.add_weight(
+      self._wE1 = self.add_weight(
           shape=(2*self.F + self.S, self.n_hidden_E1),
           initializer=self.kernel_initializer,
           name="wE1",
           regularizer=self.kernel_regularizer,
           constraint=self.kernel_constraint)
-      self.wE2 = self.add_weight(
+      self._wE2 = self.add_weight(
           shape=(self.n_hidden_E1, self.S),
           initializer=self.kernel_initializer,
           name="wE2",
@@ -146,13 +146,13 @@ class MPEU(Conv):
 
   def message(self, x, a, e):
     """Return node-wise message as described in paper above."""
-    x_w = tf.matmul(x, self.w1)
+    x_w = tf.matmul(x, self._w1)
     x_w = tf.expand_dims(x_w, -3)
     # tf.tile repeats a tensor in a given dimension.
     x_w = tf.tile(x_w, [1,x_w.shape[-2],1,1]) # maybe tiling dimension needs to be changed
-    e_w = tf.matmul(e, self.w2)
+    e_w = tf.matmul(e, self._w2)
     e_w = self.activation(e_w)
-    e_w = tf.matmul(e_w, self.w3)
+    e_w = tf.matmul(e_w, self._w3)
     e_w = self.activation(e_w)
     message = tf.multiply(x_w, e_w) # edge-wise message
     m = tf.reduce_sum(message, axis=-2) # reduced, node-wise message
@@ -161,9 +161,9 @@ class MPEU(Conv):
   def node_update(self, x, a, e):
     """Return updated nodes as in paper above."""
     m = self.message(x, a, e)
-    h_next = tf.matmul(m, self.w4)
+    h_next = tf.matmul(m, self._w4)
     h_next = self.activation(h_next)
-    h_next = tf.matmul(h_next, self.w5)
+    h_next = tf.matmul(h_next, self._w5)
     h_next = tf.add(h_next, x)
     return h_next
 
@@ -174,9 +174,9 @@ class MPEU(Conv):
     h_v = tf.expand_dims(x, -2)
     h_v = tf.tile(h_v, [1,1,h_v.shape[-3],1])
     e_next = tf.concat([h_v, h_w, e], axis=-1)
-    e_next = tf.matmul(e_next, self.wE1)
+    e_next = tf.matmul(e_next, self._wE1)
     e_next = self.activation(e_next)
-    e_next = tf.matmul(e_next, self.wE2)
+    e_next = tf.matmul(e_next, self._wE2)
     e_next = self.activation(e_next)
     return e_next
 
@@ -266,13 +266,13 @@ class MPEU_readout(Conv):
     self.S = input_shape[2][-1] # number of edge features
     self.n_hidden = self.F/2 if self.n_hidden==None else self.n_hidden
     # add weight matrices for feed-forward neural networks
-    self.w6 = self.add_weight(
+    self._w6 = self.add_weight(
         shape=(self.F, self.n_hidden),
         initializer=self.kernel_initializer,
         name="w1",
         regularizer=self.kernel_regularizer,
         constraint=self.kernel_constraint)
-    self.w7 = self.add_weight(
+    self._w7 = self.add_weight(
         shape=(self.n_hidden, self.out_dim),
         initializer=self.kernel_initializer,
         name="w2",
@@ -281,9 +281,9 @@ class MPEU_readout(Conv):
 
   def call(self, inputs):
     h, a, e = inputs
-    h = tf.matmul(h, self.w6)
+    h = tf.matmul(h, self._w6)
     h = self.activation(h)
-    h = tf.matmul(h, self.w7)
+    h = tf.matmul(h, self._w7)
     y = tf.math.reduce_sum(h, axis=-2)
     # TODO: include a averaging argument, as some target properties require averaging
     return y

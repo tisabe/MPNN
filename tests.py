@@ -148,9 +148,9 @@ class TestHelperFunctions(unittest.TestCase):
   def test_edge_gradient(self):
     '''Test gradient of wE1 and wE2 in edge update function with tensorflow gradient tape'''
     with tf.GradientTape() as tape:
-      tape.watch(self.testMPEU.wE1)
+      tape.watch(self.testMPEU._wE1)
       edge_next_MPEU = self.testMPEU.edge_update(self.h_test, self.a_test, self.e_test)
-    gradient_d_edge_d_wE1 = tape.gradient(edge_next_MPEU, self.testMPEU.wE1)
+    gradient_d_edge_d_wE1 = tape.gradient(edge_next_MPEU, self.testMPEU._wE1)
     print("Gradient de_dwE1:\n")
     print(gradient_d_edge_d_wE1)
 
