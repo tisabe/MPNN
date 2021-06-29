@@ -18,12 +18,12 @@ class TestHelperFunctions(unittest.TestCase):
                         do_edge_update=True,
                         n_hidden_m=self.n_hidden_m,
                         kernel_initializer=tf.keras.initializers.Identity())
-    self.h_test = tf.ones([self.batch_size, self.num_nodes, self.num_node_features], 
+    self.node_features_test = tf.ones([self.batch_size, self.num_nodes, self.num_node_features], 
                           dtype=tf.dtypes.float32)*self.node_factor
-    self.e_test = tf.ones([self.batch_size, self.num_nodes, self.num_nodes, self.num_edge_features], 
+    self.edge_features_test = tf.ones([self.batch_size, self.num_nodes, self.num_nodes, self.num_edge_features], 
                           dtype=tf.dtypes.float32)*self.edge_factor
-    self.a_test = cutoff_adj_batch(self.e_test[:,:,:,0], cutoff=2)
-    self.testMPEU([self.h_test, self.a_test, self.e_test])
+    self.adj_matrix_test = cutoff_adj_batch(self.edge_features_test[:,:,:,0], cutoff=2)
+    self.testMPEU([self.node_features_test, self.adj_matrix_test, self.edge_features_test])
 
   def test_dist_matrix_batch(self):
     '''Test dist_matrix_batch, returns correct node distances for batch size 1.
@@ -92,7 +92,7 @@ class TestHelperFunctions(unittest.TestCase):
     smallest_feature_length = min([self.num_node_features, self.num_edge_features])
 
     #print(testMPEU.w1)
-    message_MPEU = self.testMPEU.message(self.h_test, self.a_test, self.e_test)
+    message_MPEU = self.testMPEU.message(self.node_features_test, self.adj_matrix_test, self.edge_features_test)
     #print(message_MPEU)
     message_factor = self.edge_factor*self.node_factor*self.num_nodes # this is the expected value of each message
     message_expected = tf.ones([self.batch_size, self.num_nodes, smallest_feature_length],
@@ -107,12 +107,12 @@ class TestHelperFunctions(unittest.TestCase):
     self.assertTrue(diff_error < 1e-7) # expected floating point error
 
   def test_MPEU_node_update(self):
-    message_MPEU = self.testMPEU.message(self.h_test, self.a_test, self.e_test)
+    message_MPEU = self.testMPEU.message(self.node_features_test, self.adj_matrix_test, self.edge_features_test)
     message_truncated = message_MPEU[:,:,:self.num_node_features]
 
-    h_next_MPEU = self.testMPEU.node_update(self.h_test, self.a_test, self.e_test)
+    h_next_MPEU = self.testMPEU.node_update(self.node_features_test, self.adj_matrix_test, self.edge_features_test)
     #print(np.shape(message_truncated))
-    h_next_expected = self.h_test + message_truncated
+    h_next_expected = self.node_features_test + message_truncated
 
     h_next_diff = np.abs(h_next_MPEU - h_next_expected)
     diff_error = np.mean(h_next_diff)
@@ -124,13 +124,13 @@ class TestHelperFunctions(unittest.TestCase):
     #print(self.testMPEU.n_hidden_E1)
     #print(self.testMPEU.wE1)
     #print(self.testMPEU.wE2)
-    edge_next_MPEU = self.testMPEU.edge_update(self.h_test, self.a_test, self.e_test)
+    edge_next_MPEU = self.testMPEU.edge_update(self.node_features_test, self.adj_matrix_test, self.edge_features_test)
     edge_next_expected = np.zeros([self.batch_size, self.num_nodes,
                                    self.num_nodes, self.num_edge_features])
     for b_i in range(self.batch_size):
       for i in range(self.num_nodes):
         for j in range(self.num_nodes):
-          features_concat = tf.concat([self.h_test[b_i, i, :], self.h_test[b_i, j, :], self.e_test[b_i, i, j, :]],
+          features_concat = tf.concat([self.node_features_test[b_i, i, :], self.node_features_test[b_i, j, :], self.edge_features_test[b_i, i, j, :]],
                                       axis = 0)
           edge_next_expected[b_i, i, j] = features_concat[:self.num_edge_features]
     #print(edge_next_expected)
@@ -143,13 +143,13 @@ class TestHelperFunctions(unittest.TestCase):
   def test_embedding_layer(self):
     out_dim_e = 10
     testEmbedding = MPEU_embedding_QM9(out_dim_e=out_dim_e)
-    h_embed, a_embed, e_embed = testEmbedding([self.h_test, self.a_test, self.e_test])
+    h_embed, a_embed, e_embed = testEmbedding([self.node_features_test, self.adj_matrix_test, self.edge_features_test])
   
   def test_edge_gradient(self):
     '''Test gradient of wE1 and wE2 in edge update function with tensorflow gradient tape'''
     with tf.GradientTape() as tape:
       tape.watch(self.testMPEU._wE1)
-      edge_next_MPEU = self.testMPEU.edge_update(self.h_test, self.a_test, self.e_test)
+      edge_next_MPEU = self.testMPEU.edge_update(self.node_features_test, self.adj_matrix_test, self.edge_features_test)
     gradient_d_edge_d_wE1 = tape.gradient(edge_next_MPEU, self.testMPEU._wE1)
     print("Gradient de_dwE1:\n")
     print(gradient_d_edge_d_wE1)
