@@ -258,7 +258,7 @@ class MPEU_readout(Conv):
 
   def build(self, input_shape):
     """Build the layer on first call, when matrix dimensions are known."""
-    assert len(input_shape) == 3
+    #assert len(input_shape) == 3 # assert is not supported in tf graph mode
     self.batch_size = input_shape[0][0]
     self.N = input_shape[0][-2] # number of nodes (maximum in batch, smaller graphs are zero padded)
     self.F = input_shape[0][-1] # number of node features
@@ -359,34 +359,12 @@ class MPEU_embedding_QM9(Conv):
 
   def build(self, input_shape):
     """Build the layer on first call, when matrix dimensions are known."""
-    assert len(input_shape) == 3
+    #assert len(input_shape) == 3 # assert is not supported in tf graph mode
     self.batch_size = input_shape[0][0]
     self.N = input_shape[0][-2] # number of nodes (maximum in batch, smaller graphs are zero padded)
     self.F = input_shape[0][-1] # number of node features
     #self.E = input_shape[2][-2] # number of edges
     self.S = input_shape[2][-1] # number of edge features
-
-  def get_k_matrix(self, D):
-    """Return a matrix of k numbers to build the edge embedding.
-    Args:
-      - D: pairwise distance matrix, batched
-        Size: (btach_size, N_max, N_max)
-
-    Returns: k matrix, ascending integers in last dimension, 
-      repeated to be size: (batch_size, N_max, N_max, k_max)
-    """
-    k_max = self.out_dim_e
-    #k_rbf = tf.range(kmax)
-    k_rbf = tf.range(k_max, dtype=tf.dtypes.float32)
-    k_rbf = tf.expand_dims(k_rbf, 0)
-    k_rbf = tf.expand_dims(k_rbf, 0)
-    k_rbf = tf.expand_dims(k_rbf, 0)
-    multiples = tf.constant([D.shape[0], D.shape[1], D.shape[2], 1])
-    #k_rbf = tf.tile(k_rbf, [D.shape[0], D.shape[1], D.shape[2], 1])
-    k_rbf = tf.tile(k_rbf, multiples)
-    #k_rbf = tf.tile(k_rbf, [D.shape[0], D.shape[1], 20, 1])
-    return k_rbf
-    
 
   def call(self, inputs):
     #print("input length:", len(inputs))
@@ -397,9 +375,9 @@ class MPEU_embedding_QM9(Conv):
     #print("x shape:", x.shape)
     pos = x[:,:,5:8]
     D = dist_matrix_batch(pos)
-    a = threshold_cutoff(D, self.cutoff)
+    #a = threshold_cutoff(D, self.cutoff)
     # generate k's for radial basis expansion
-    k_rbf = self.get_k_matrix(D)
+    k_rbf = get_k_matrix(D, self.out_dim_e)
     # do radial basis expansion
     D_k = tf.expand_dims(D, -1)
     D_k = tf.tile(D_k, [1, 1, 1, self.out_dim_e])

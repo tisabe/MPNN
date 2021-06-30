@@ -154,5 +154,29 @@ class TestHelperFunctions(unittest.TestCase):
     print("Gradient de_dwE1:\n")
     print(gradient_d_edge_d_wE1)
 
+  def test_get_k_matrix(self):
+    dimensions = 3 # number of spatial dimensions
+    position_matrix = tf.random.uniform(shape=[self.batch_size, self.num_nodes, dimensions],
+                                        maxval=1.0)
+    distance_matrix = dist_matrix_batch(position_matrix)
+    out_dim_e = 150 # size of the edge feature vector
+    k_matrix = get_k_matrix(distance_matrix, out_dim_e)
+    expected_k_matrix = np.zeros([distance_matrix.shape[0],
+                                distance_matrix.shape[1],
+                                distance_matrix.shape[2],
+                                out_dim_e])
+    # now for the loop to set the k values:
+    for batch_idx in range(self.batch_size):
+      for node_sending_idx in range(self.num_nodes):
+        for node_receiving_idx in range(self.num_nodes):
+          for k_idx in range(out_dim_e):
+            expected_k_matrix[batch_idx,
+                              node_sending_idx,
+                              node_receiving_idx,
+                              k_idx] = k_idx
+
+    self.assertEqual(np.shape(k_matrix), np.shape(expected_k_matrix))
+    self.assertTrue(np.array_equal(expected_k_matrix, k_matrix.numpy()))
+
 if __name__ == '__main__':
     unittest.main()
