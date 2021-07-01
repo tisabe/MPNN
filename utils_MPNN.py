@@ -65,29 +65,32 @@ def threshold_cutoff(x, cutoff):
   out = tf.linalg.set_diag(out, tf.zeros([out.shape[0],out.shape[1]], dtype=tf.float64))
   return out
 
+#tf.config.run_functions_eagerly(True)
 
+#@tf.function
 def get_k_matrix(D, out_dim_e):
-  """Return a matrix of k numbers to build the edge embedding.
-  Args:
-    - D: pairwise distance matrix, batched
-      Size: (btach_size, N_max, N_max)
+    """Return a matrix of k numbers to build the edge embedding.
+    Args:
+      - D: pairwise distance matrix, batched
+        Size: (btach_size, N_max, N_max)
 
-  Returns: k matrix, ascending integers in last dimension,
-    repeated to be size: (batch_size, N_max, N_max, k_max)
-  """
-  k_max = out_dim_e
-  #k_rbf = tf.range(kmax)
-  k_rbf = tf.range(k_max, dtype=tf.dtypes.float32)
-  k_rbf = tf.expand_dims(k_rbf, 0)
-  k_rbf = tf.expand_dims(k_rbf, 0)
-  k_rbf = tf.expand_dims(k_rbf, 0)
-  multiples = tf.constant([D.shape[0], D.shape[1], D.shape[2], 1])
-  #k_rbf = tf.tile(k_rbf, [D.shape[0], D.shape[1], D.shape[2], 1])
-  k_rbf = tf.tile(k_rbf, multiples)
-  #k_rbf = tf.tile(k_rbf, [D.shape[0], D.shape[1], 20, 1])
-  return k_rbf
+    Returns: k matrix, ascending integers in last dimension,
+      repeated to be size: (batch_size, N_max, N_max, k_max)
+    """
+    k_max = out_dim_e
+    #k_rbf = tf.range(kmax)
+    k_rbf = tf.range(k_max, dtype=tf.dtypes.float32)
+    k_rbf = tf.expand_dims(k_rbf, 0)
+    k_rbf = tf.expand_dims(k_rbf, 0)
+    k_rbf = tf.expand_dims(k_rbf, 0)
+    shape_D = tf.shape(D)
+    #print(shape_D)
+    multiples = tf.constant([D.shape[0], D.shape[1], D.shape[2], 1])
+    #multiples = tf.constant([shape_D[0], shape_D[1], shape_D[2], 1])
+    k_rbf = tf.tile(k_rbf, multiples)
+    return k_rbf
 
-
+#tf.config.run_functions_eagerly(False)
 
 
 

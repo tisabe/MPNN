@@ -43,7 +43,10 @@ class MyGNN(Model):
     self.readout_layer = MPEU_readout(out_dim=19)
   
   def call(self, inputs):
+    #tf.config.run_functions_eagerly(True)
     res = self.embedding_layer(inputs)
+    #tf.config.run_functions_eagerly(False)
+
     res = self.mp_layer1(res)
     res = self.mp_layer2(res)
     res = self.mp_layer3(res)
@@ -51,7 +54,7 @@ class MyGNN(Model):
 
 # define hyperparameters
 learning_rate = 1e-3  # Learning rate
-epochs = 10  # Number of training epochs
+epochs = 2  # Number of training epochs
 batch_size = 32  # Batch size
 
 model = MyGNN()
@@ -63,10 +66,12 @@ loader_tr = BatchLoader(dataset_train, batch_size=batch_size)
 log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
+#tf.config.run_functions_eagerly(True)
 model.fit(loader_tr.load(),
           steps_per_epoch=loader_tr.steps_per_epoch,
           epochs=epochs,
-	  callbacks=[tensorboard_callback])
+	      callbacks=[tensorboard_callback])
+#tf.config.run_functions_eagerly(False)
 
 print("Learning rate:")
 print(learning_rate)
