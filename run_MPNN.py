@@ -39,7 +39,7 @@ class MyGNN(Model):
     self.mp_layer1 = MPEU(activation="relu", do_edge_update=edge_updates)
     self.mp_layer2 = MPEU(activation="relu", do_edge_update=edge_updates)
     self.mp_layer3 = MPEU(activation="relu", do_edge_update=False)
-    self.embedding_layer = MPEU_embedding_QM9()
+    self.embedding_layer = MPEU_embedding_QM9(activation="relu")
     self.readout_layer = MPEU_readout(out_dim=19)
   
   def call(self, inputs):

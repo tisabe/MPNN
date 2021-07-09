@@ -330,7 +330,8 @@ class MPEU_embedding_QM9(Conv):
   def __init__(
       self,
       cutoff=20.0,
-      out_dim_e=150,
+      out_dim_e=32,
+      k_max=150,
       activation=None,
       use_bias=True,
       kernel_initializer="glorot_uniform",
@@ -355,6 +356,7 @@ class MPEU_embedding_QM9(Conv):
         **kwargs
     )
     self.out_dim_e = out_dim_e
+    self.k_max = k_max
     self.cutoff = cutoff
 
   def build(self, input_shape):
@@ -364,7 +366,34 @@ class MPEU_embedding_QM9(Conv):
     self.N = input_shape[0][-2] # number of nodes (maximum in batch, smaller graphs are zero padded)
     self.F = input_shape[0][-1] # number of node features
     #self.E = input_shape[2][-2] # number of edges
-    self.S = input_shape[2][-1] # number of edge features
+    #self.S = input_shape[2][-1] # number of edge features
+    self.n_hidden_E1 = 2*self.out_dim_e
+    self._wE1 = self.add_weight(
+        shape=(self.k_max + 2*(self.F - 3), self.n_hidden_E1),
+        # self.F -3, because we subtract 3 coordinate dimensions from node feature length
+        initializer=self.kernel_initializer,
+        name="wE1",
+        regularizer=self.kernel_regularizer,
+        constraint=self.kernel_constraint)
+    self._wE2 = self.add_weight(
+        shape=(self.n_hidden_E1, self.out_dim_e),
+        initializer=self.kernel_initializer,
+        name="wE2",
+        regularizer=self.kernel_regularizer,
+        constraint=self.kernel_constraint)
+
+  def edge_update(self, x, a, e):
+    """Return updated edges as in paper above."""
+    h_w = tf.expand_dims(x, -3)
+    h_w = tf.tile(h_w, [1,h_w.shape[-2],1,1])
+    h_v = tf.expand_dims(x, -2)
+    h_v = tf.tile(h_v, [1,1,h_v.shape[-3],1])
+    e_next = tf.concat([h_v, h_w, e], axis=-1)
+    e_next = tf.matmul(e_next, self._wE1)
+    e_next = self.activation(e_next)
+    e_next = tf.matmul(e_next, self._wE2)
+    e_next = self.activation(e_next)
+    return e_next
 
   def call(self, inputs):
     #print("input length:", len(inputs))
@@ -373,14 +402,14 @@ class MPEU_embedding_QM9(Conv):
     a = tf.cast(a, tf.dtypes.float32)
     e = inputs[2]
     #print("x shape:", x.shape)
-    pos = x[:,:,5:8]
+    pos = x[:, :, 5:8]
     D = dist_matrix_batch(pos)
     #a = threshold_cutoff(D, self.cutoff)
     # generate k's for radial basis expansion
-    k_rbf = get_k_matrix(D, self.out_dim_e)
+    k_rbf = get_k_matrix(D, self.k_max)
     # do radial basis expansion
     D_k = tf.expand_dims(D, -1)
-    D_k = tf.tile(D_k, [1, 1, 1, self.out_dim_e])
+    D_k = tf.tile(D_k, [1, 1, 1, self.k_max])
     delta = 0.1 # TODO: make parameters accessible
     mu_min = 0.0
     #e_k = tf.cast(D_k, tf.dtypes.float64) - delta*tf.cast(k_rbf, tf.dtypes.float64) + mu_min
@@ -394,8 +423,11 @@ class MPEU_embedding_QM9(Conv):
     e_k = tf.where(cond, e_k, tf.zeros(tf.shape(e_k), dtype=tf.dtypes.float32))
 
     # extract all node features except positions
-    x_m = tf.concat([x[...,:5],x[...,8:]],axis=-1)
-    return [x_m, a, e_k]
+    x_m = tf.concat([x[..., :5], x[..., 8:]], axis=-1)
+
+    # apply an initial edge update to the embedded edge features
+    e = self.edge_update(x_m, a, e_k)
+    return [x_m, a, e]
 
 
 

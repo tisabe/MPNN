@@ -9,7 +9,7 @@ class TestHelperFunctions(unittest.TestCase):
   def setUp(self):
     self.batch_size = 2
     self.num_nodes = 4
-    self.num_node_features = 5
+    self.num_node_features = 10 # must be >8, since embedding(QM9) takes away elements 5,6,7
     self.num_edge_features = 4
     self.n_hidden_m = 32
     self.node_factor = 2
@@ -141,6 +141,7 @@ class TestHelperFunctions(unittest.TestCase):
     self.assertTrue(diff_error < 1e-7) # expected floating point error
 
   def test_embedding_layer(self):
+    # TODO: implement
     out_dim_e = 10
     testEmbedding = MPEU_embedding_QM9(out_dim_e=out_dim_e)
     h_embed, a_embed, e_embed = testEmbedding([self.node_features_test, self.adj_matrix_test, self.edge_features_test])
