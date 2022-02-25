@@ -5,3 +5,9 @@ Main Requirements:
 Numpy
 Tensorflow
 Spektral
+
+We use:
+- Optax for the training optimizer.
+- Jraph for the graph neural network.
+- Haiku for the fully connected neural networks (used to compute edge/message updates and for the readout function).
+- Flax for the training loop (it keeps track of the training state and works well with Optax).
